@@ -1,63 +1,60 @@
-# 🚀 Parcial 2 - Go Deployer 
+# 🚀 Go Deployer
 
-¡Bienvenido al **Deployer Automático**! Esta herramienta está diseñada para que desplegar tus aplicaciones escritas en Go sea un trámite. Olvidate de andar copiando archivos a mano y peleándote con la terminal de la VM; hacelo todo desde un dashboard fachero.
+¡Bienvenido al **Deployer Automático**! Esta herramienta está diseñada para simplificar el despliegue de aplicaciones escritas en Go. Gestiona todo el ciclo de vida de tu aplicación, desde la transferencia hasta la ejecución como servicio del sistema, directamente desde un panel de control intuitivo.
 
 ## ✨ Características
 
-- **Prueba de Conexión SSH:** Verificá que llegás a tu servidor antes de intentar nada.
-- **Deploy con un Clic:** Subí un archivo `.zip`, el deployer lo transfiere, lo descomprime y lo compila en la VM remota.
-- **Gestión de Servicios Systemd:** Generá y activá servicios de `systemd` automáticamente para que tu app corra como un demonio.
-- **Control Total:** Start, Stop, Restart y Status de tus servicios desde la interfaz.
-- **Logs en Tiempo Real:** Mirá lo que está pasando en tu servidor mediante WebSockets (streaming de `tail -f`).
+* **Prueba de Conexión SSH:** Verifica la conectividad con tu servidor antes de iniciar cualquier operación.
+* **Despliegue con un Clic:** Sube un archivo `.zip`, el deployer lo transfiere, lo descomprime y lo compila en la VM remota automáticamente.
+* **Gestión de Servicios Systemd:** Genera y activa servicios de `systemd` de forma automática para que tu aplicación se ejecute como un demonio del sistema.
+* **Control Total:** Inicia, detén, reinicia y consulta el estado de tus servicios directamente desde la interfaz.
+* **Logs en Tiempo Real:** Visualiza lo que sucede en tu servidor mediante WebSockets (transmisión en vivo de `tail -f`).
 
 ## 🛠️ Stack Tecnológico
 
-- **Backend:** [Go](https://go.dev/) con el framework [Gin](https://gin-gonic.com/).
-- **SSH & WebSockets:** `golang.org/x/crypto/ssh` para la magia remota y `gorilla/websocket` para los logs.
+* **Backend:** [Go](https://go.dev/) con el framework [Gin](https://gin-gonic.com/).
+* **SSH & WebSockets:** `golang.org/x/crypto/ssh` para la ejecución remota y `gorilla/websocket` para la transmisión de logs.
+* **Frontend:** HTML5, JavaScript y CSS (Tailwind CSS recomendado).
 
 ## 🚀 Cómo empezar
 
 ### Requisitos Previos
 
-1. **En tu máquina local:** Tener Go instalado para correr el servidor del deployer.
-2. **En la VM remota (Destino):**
-   - Tener `unzip` instalado (`sudo apt install unzip`).
-   - Tener `go` instalado (si querés que compile allá).
-   - **IMPORTANTE (Permisos):** Para que el deployer pueda gestionar servicios, el usuario SSH necesita permisos de `sudo` sin contraseña. Podés activarlo corriendo esto en la VM:
-     ```bash
-     echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$(whoami)
-     ```
+1.  **En tu máquina local:** Tener Go instalado para ejecutar el servidor del deployer.
+2.  **En la VM remota (Destino):**
+    * Tener `unzip` instalado: `sudo apt install unzip -y`
+    * Tener `go` instalado (en caso de requerir compilación remota).
+    * **IMPORTANTE (Permisos):** El usuario SSH necesita permisos de `sudo` sin contraseña para gestionar servicios. Puedes configurarlo ejecutando:
+        ```bash
+        echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$(whoami)
+        ```
 
 ### Instalación y Ejecución
 
-1. Cloná el repositorio:
-   ```bash
-   git clone https://github.com/santi/parcial2-deployer.git
-   cd parcial2-deployer
-   ```
+1.  **Clonar el repositorio:**
+    ```bash
+    git clone [https://github.com/santi/parcial2-deployer.git](https://github.com/santi/parcial2-deployer.git)
+    cd parcial2-deployer
+    ```
 
-2. Descargá las dependencias:
-   ```bash
-   go mod tidy
-   ```
+2.  **Descargar dependencias:**
+    ```bash
+    go mod tidy
+    ```
 
-3. Corré la aplicación:
-   ```bash
-   go run main.go
-   ```
+3.  **Ejecutar la aplicación:**
+    ```bash
+    go run main.go
+    ```
 
-4. Abrí tu navegador en: `http://localhost:8080`
+4.  **Acceder a la interfaz:**
+    Abre tu navegador en: `http://localhost:8080`
 
 ## 📁 Estructura del Proyecto
 
-- `main.go`: El corazón del servidor, las rutas de la API y la lógica de SSH.
-- `static/`: Contiene el frontend (HTML/JS) de la aplicación.
-- `worker.go`: (Si existe lógica separada para procesos pesados).
-- `go.mod`: Definición del módulo y dependencias.
-
-## 📝 Notas de Uso
-
-- El deployer intenta inicializar un `go mod` si no encuentra uno en la carpeta de destino.
-- Los servicios creados se guardan en `/etc/systemd/system/` con la configuración de reinicio automático (`Restart=always`).
-
----
+```text
+├── main.go          # Servidor principal, rutas y lógica SSH
+├── static/          # Archivos del frontend (HTML, CSS, JS)
+├── uploads/         # Almacenamiento temporal de archivos ZIP
+├── worker/          # Aplicación de ejemplo para gestionar
+└── go.mod           # Dependencias del proyecto
