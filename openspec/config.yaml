@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Go 1.26+, net/http, golang.org/x/crypto/ssh, WebSockets.
+  Architecture: Clean Architecture / Modular.
+  Testing: Go testing (built-in).
+  Style: gofmt, go vet.
+
+strict_tdd: true
+
+testing:
+  runner:
+    command: "go test ./..."
+    framework: "go test"
+  layers:
+    unit: true
+    integration: true
+    e2e: false
+  quality:
+    linter: "go vet"
+    formatter: "gofmt"
+
+rules:
+  proposal:
+    - Include rollback plan for SSH connection failures.
+    - Identify affected modules (SSH, File, Systemd, API).
+  specs:
+    - Use Given/When/Then format for scenarios.
+  design:
+    - Document SSH session handling and security.
+  tasks:
+    - Group tasks by module.
+  apply:
+    - Follow idiomatic Go patterns.
+  verify:
+    - Run tests before each commit.

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desplegador Remoto Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .terminal {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">🚀 Desplegador Remoto Pro</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Credenciales SSH -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">1. Conexión SSH</h2>
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-600">IP Remota</label>
+                        <input type="text" id="ip" class="w-full p-2 border rounded" placeholder="192.168.1.10">
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-sm font-medium text-gray-600">Puerto</label>
+                        <input type="text" id="port" class="w-full p-2 border rounded" placeholder="22">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Usuario</label>
+                    <input type="text" id="user" class="w-full p-2 border rounded" placeholder="ubuntu">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Contraseña</label>
+                    <input type="password" id="password" class="w-full p-2 border rounded" placeholder="********">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="testConnection()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex-1 text-sm">Probar Conexión</button>
+                    <button onclick="saveConfig()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">Guardar Config</button>
+                </div>
+                <div id="connectionStatus" class="text-sm font-medium mt-1 hidden"></div>
+            </div>
+
+            <!-- Módulo de Despliegue -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">2. Desplegar ZIP</h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Ruta Remota (Debe incluir nombre.zip)</label>
+                    <input type="text" id="remotePath" class="w-full p-2 border rounded" placeholder="/home/user/app.zip">
+                    <p class="text-xs text-gray-500 mt-1">Ej: /home/vboxuser/Documents/app.zip</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Seleccionar Archivo ZIP</label>
+                    <input type="file" id="zipFile" class="w-full p-2 border rounded bg-gray-50">
+                </div>
+                <button onclick="deploy()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full">Subir y Desplegar</button>
+            </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-t pt-6">
+            <!-- Control de Systemd -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">3. Control de Servicio (Systemd)</h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Nombre del Servicio</label>
+                    <input type="text" id="serviceName" class="w-full p-2 border rounded" placeholder="worker">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Ruta del Binario Ejecutable</label>
+                    <input type="text" id="execPath" class="w-full p-2 border rounded" placeholder="/home/ubuntu/worker">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="createService()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition flex-1">Crear Servicio</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <button onclick="control('start')" class="bg-gray-800 text-white px-2 py-2 rounded hover:bg-black transition text-sm">Iniciar (Start)</button>
+                    <button onclick="control('stop')" class="bg-red-600 text-white px-2 py-2 rounded hover:bg-red-700 transition text-sm">Detener (Stop)</button>
+                    <button onclick="control('restart')" class="bg-yellow-600 text-white px-2 py-2 rounded hover:bg-yellow-700 transition text-sm">Reiniciar (Restart)</button>
+                    <button onclick="control('status')" class="bg-cyan-600 text-white px-2 py-2 rounded hover:bg-cyan-700 transition text-sm">Estado (Status)</button>
+                </div>
+            </div>
+
+            <!-- Logs en Vivo -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">4. Logs en Tiempo Real</h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Ruta del Archivo de Log</label>
+                    <input type="text" id="logPath" class="w-full p-2 border rounded" placeholder="/home/ubuntu/worker.log">
+                </div>
+                <button onclick="startLogs()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition w-full">Conectar a los Logs</button>
+                <div id="terminal" class="terminal mt-2 text-xs">
+                    Esperando flujo de logs...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = () => {
+            document.getElementById('ip').value = localStorage.getItem('ssh_ip') || '';
+            document.getElementById('port').value = localStorage.getItem('ssh_port') || '22';
+            document.getElementById('user').value = localStorage.getItem('ssh_user') || '';
+            document.getElementById('remotePath').value = localStorage.getItem('ssh_remote_path') || '';
+            document.getElementById('serviceName').value = localStorage.getItem('ssh_service_name') || 'worker';
+            document.getElementById('execPath').value = localStorage.getItem('ssh_exec_path') || '';
+            document.getElementById('logPath').value = localStorage.getItem('ssh_log_path') || '';
+        };
+
+        function saveConfig() {
+            localStorage.setItem('ssh_ip', document.getElementById('ip').value);
+            localStorage.setItem('ssh_port', document.getElementById('port').value);
+            localStorage.setItem('ssh_user', document.getElementById('user').value);
+            localStorage.setItem('ssh_remote_path', document.getElementById('remotePath').value);
+            localStorage.setItem('ssh_service_name', document.getElementById('serviceName').value);
+            localStorage.setItem('ssh_exec_path', document.getElementById('execPath').value);
+            localStorage.setItem('ssh_log_path', document.getElementById('logPath').value);
+            alert('Configuración guardada ✅');
+        }
+
+        function getSSHConfig() {
+            return {
+                ip: document.getElementById('ip').value,
+                port: document.getElementById('port').value || "22",
+                user: document.getElementById('user').value,
+                password: document.getElementById('password').value
+            };
+        }
+
+        async function testConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            statusDiv.classList.add('text-blue-600');
+            statusDiv.innerText = 'Conectando...';
+
+            try {
+                const body = getSSHConfig();
+                const res = await fetch('/api/ssh-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    statusDiv.classList.replace('text-blue-600', 'text-green-600');
+                    statusDiv.innerText = '✅ ¡Conexión Exitosa!';
+                } else {
+                    statusDiv.classList.replace('text-blue-600', 'text-red-600');
+                    statusDiv.innerText = '❌ Error: ' + (data.error || 'Error desconocido');
+                }
+            } catch (err) {
+                statusDiv.classList.replace('text-blue-600', 'text-red-600');
+                statusDiv.innerText = '❌ Falló la conexión: ' + err.message;
+            }
+        }
+
+        async function deploy() {
+            const config = getSSHConfig();
+            const formData = new FormData();
+            formData.append('ip', config.ip);
+            formData.append('port', config.port);
+            formData.append('user', config.user);
+            formData.append('password', config.password);
+            formData.append('path', document.getElementById('remotePath').value);
+            formData.append('file', document.getElementById('zipFile').files[0]);
+
+            const res = await fetch('/api/deploy', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+                let msg = data.status + "\n\nBinario generado:\n" + data.binary_path + "\n\nArchivos:\n" + data.files_in_dir;
+                if (data.build_log) msg += "\n\nLog de compilación:\n" + data.build_log;
+                alert(msg);
+                // Autocompletar la ruta del ejecutable para el paso 3
+                document.getElementById('execPath').value = data.binary_path;
+            } else {
+                alert("❌ Error: " + data.error);
+            }
+        }
+
+        async function createService() {
+            const body = {
+                ssh: getSSHConfig(),
+                service: {
+                    name: document.getElementById('serviceName').value,
+                    path: document.getElementById('execPath').value
+                }
+            };
+            const res = await fetch('/api/service', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            alert(res.ok ? "✅ " + data.status : "❌ Error: " + data.error);
+        }
+
+        async function control(action) {
+            const body = {
+                ssh: getSSHConfig(),
+                name: document.getElementById('serviceName').value,
+                action: action
+            };
+            const res = await fetch('/api/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (action === 'status') {
+                document.getElementById('terminal').innerHTML += `<div class="text-blue-400 mt-2">--- ESTADO DEL SERVICIO ---</div><pre class="whitespace-pre-wrap">${data.output}</pre>`;
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+            } else {
+                alert(res.ok ? "✅ " + data.status : "❌ Error: " + data.error);
+            }
+        }
+
+        function startLogs() {
+            const config = getSSHConfig();
+            const terminal = document.getElementById('terminal');
+            terminal.innerHTML = "Conectando al flujo de logs...<br>";
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws/logs`);
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    ip: config.ip,
+                    port: config.port,
+                    user: config.user,
+                    password: config.password,
+                    log_path: document.getElementById('logPath').value
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                terminal.innerHTML += event.data + "<br>";
+                terminal.scrollTop = terminal.scrollHeight;
+            };
+
+            ws.onerror = (error) => {
+                terminal.innerHTML += `<div class="text-red-500">Error de WebSocket: ${error}</div>`;
+            };
+
+            ws.onclose = () => {
+                terminal.innerHTML += `<div class="text-yellow-500">Conexión cerrada.</div>`;
+            };
+        }
+    </script>
+</body>
+</html>
