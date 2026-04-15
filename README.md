@@ -33,7 +33,7 @@
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/santi/parcial2-deployer.git](https://github.com/santi/parcial2-deployer.git)
+    git clone https://github.com/Shuh3n/Pulse-Deploy--Remote-SSH-Orchestrator.git
     cd parcial2-deployer
     ```
 

@@ -19,7 +19,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-8">
     <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">🚀 Desplegador Remoto Pro</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">🚀 Desplegador Remoto</h1>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Credenciales SSH -->
@@ -203,7 +203,44 @@
                 body: JSON.stringify(body)
             });
             const data = await res.json();
-            alert(res.ok ? "✅ " + data.status : "❌ Error: " + data.error);
+            if (res.ok) {
+                alert("✅ Servicio creado\n\n" + data.status);
+            } else {
+                alert("❌ No se pudo crear el servicio\n\n" + (data.error || 'Error desconocido'));
+            }
+        }
+
+        function getControlAlert(action, data, res) {
+            const actionMessages = {
+                start: {
+                    ok: '✅ Servicio iniciado correctamente.',
+                    error: '❌ No se pudo iniciar el servicio.'
+                },
+                stop: {
+                    ok: '🛑 Servicio detenido correctamente.',
+                    error: '❌ No se pudo detener el servicio.'
+                },
+                restart: {
+                    ok: '🔄 Servicio reiniciado correctamente.',
+                    error: '❌ No se pudo reiniciar el servicio.'
+                },
+                status: {
+                    ok: '📋 Estado del servicio obtenido correctamente.',
+                    error: '❌ No se pudo consultar el estado del servicio.'
+                }
+            };
+
+            const fallback = {
+                ok: '✅ Acción realizada correctamente.',
+                error: '❌ No se pudo completar la acción.'
+            };
+
+            const messages = actionMessages[action] || fallback;
+            if (res.ok) {
+                return `${messages.ok}\n\n${data.status || ''}`.trim();
+            }
+
+            return `${messages.error}\n\n${data.error || 'Error desconocido'}`;
         }
 
         async function control(action) {
@@ -219,10 +256,11 @@
             });
             const data = await res.json();
             if (action === 'status') {
+                alert(getControlAlert(action, data, res));
                 document.getElementById('terminal').innerHTML += `<div class="text-blue-400 mt-2">--- ESTADO DEL SERVICIO ---</div><pre class="whitespace-pre-wrap">${data.output}</pre>`;
                 document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
             } else {
-                alert(res.ok ? "✅ " + data.status : "❌ Error: " + data.error);
+                alert(getControlAlert(action, data, res));
             }
         }
 
